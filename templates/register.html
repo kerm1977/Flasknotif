@@ -131,7 +131,7 @@
                     </select>
                 </div>
 
-                {# Email (Opcional) #}
+                {# Email (Opcional) - Se eliminó el atributo 'required' #}
                 <div class="mb-3">
                     <label for="email" class="form-label">Email (Opcional)</label>
                     <input type="email" class="form-control" id="email" name="email" value="{{ request.form.get('email', '') }}">

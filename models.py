@@ -29,55 +29,38 @@ caminata_participantes = db.Table('caminata_participantes',
 )
 
 
-# Definición del modelo de usuario (existente)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    
-    # Campos obligatorios
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
     primer_apellido = db.Column(db.String(100), nullable=False)
     telefono = db.Column(db.String(20), nullable=False)
-    # CORRECCIÓN: Cambiado de 'fecha_fecha_creacion' a 'fecha_registro'
-    fecha_registro = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    fecha_actualizacion = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True)
-
-    # Campos opcionales (existentes)
-    avatar_url = db.Column(db.String(255), default='images/defaults/default_avatar.png')
+    avatar_url = db.Column(db.String(200), nullable=True, default='images/defaults/default_avatar.png')
     segundo_apellido = db.Column(db.String(100), nullable=True)
     telefono_emergencia = db.Column(db.String(20), nullable=True)
     nombre_emergencia = db.Column(db.String(100), nullable=True)
     empresa = db.Column(db.String(100), nullable=True)
-    cedula = db.Column(db.String(50), nullable=True)
-    direccion = db.Column(db.String(255), nullable=True) # Campo de Dirección existente
-    email = db.Column(db.String(120), unique=True, nullable=True)
-    actividad = db.Column(db.String(50), nullable=True)
+    cedula = db.Column(db.String(20), nullable=True)
+    direccion = db.Column(db.String(200), nullable=True)
+    # MODIFICACIÓN CLAVE: Eliminar unique=True para permitir múltiples None
+    email = db.Column(db.String(120), nullable=True) 
+    actividad = db.Column(db.String(100), nullable=True)
     capacidad = db.Column(db.String(50), nullable=True)
-    participacion = db.Column(db.String(50), nullable=True)
+    participacion = db.Column(db.String(100), nullable=True)
+    fecha_cumpleanos = db.Column(db.Date, nullable=True) # Nuevo campo
+    tipo_sangre = db.Column(db.String(5), nullable=True) # Nuevo campo
+    poliza = db.Column(db.String(100), nullable=True) # Nuevo campo
+    aseguradora = db.Column(db.String(100), nullable=True) # Nuevo campo
+    alergias = db.Column(db.Text, nullable=True) # Nuevo campo
+    enfermedades_cronicas = db.Column(db.Text, nullable=True) # Nuevo campo
+    role = db.Column(db.String(50), nullable=False, default='Usuario Regular') # Nuevo campo para roles
+    last_login_at = db.Column(db.DateTime, nullable=True) # Nuevo campo para la última vez que inició sesión
 
-    # NUEVOS CAMPOS AÑADIDOS
-    fecha_cumpleanos = db.Column(db.Date, nullable=True) # Para la fecha de cumpleaños
-    tipo_sangre = db.Column(db.String(5), nullable=True) # Para el tipo de sangre (ej. A+, O-)
-    poliza = db.Column(db.String(100), nullable=True) # Número o nombre de póliza
-    aseguradora = db.Column(db.String(100), nullable=True) # Nombre de la aseguradora
-    alergias = db.Column(db.Text, nullable=True) # Para alergias (texto largo)
-    enfermedades_cronicas = db.Column(db.Text, nullable=True) # Para enfermedades crónicas (texto largo)
-    
-    # Campos adicionales de user (del código anterior)
-    # CAMBIO: profile_image ahora es nullable=True para permitir migraciones sin error
-    profile_image = db.Column(db.String(20), nullable=True, default='default.jpg')
-    is_admin = db.Column(db.Boolean, default=False)
-    fecha_nacimiento = db.Column(db.Date, nullable=True) # Originalmente 'fecha_nacimiento'
-    genero = db.Column(db.String(10), nullable=True)
-    last_login_at = db.Column(db.DateTime, nullable=True) # Para registrar la última sesión
-
-    # NUEVO CAMPO: Role para el sistema de permisos
-    role = db.Column(db.String(50), default='Usuario Regular', nullable=False) # Añadir el campo de rol
-
+    # ... (el resto de tu modelo User si hay más campos)
 
     def __repr__(self):
-        return f"User('{self.username}', '{self.email}', '{self.nombre}')"
+        return f'<User {self.username}>'
 
 # MODELO Project (existente)
 class Project(db.Model):

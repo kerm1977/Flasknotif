@@ -277,6 +277,7 @@ def register():
             flash('Ese nombre de usuario ya está en uso. Por favor, elige otro.', 'danger')
             return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
 
+        # Hacemos el email opcional, pero si se proporciona, lo validamos y verificamos unicidad
         if email:
             email = email.lower() # Convertir el email a minúsculas para consistencia y evitar duplicados por mayúsculas/minúsculas
             # Validación de email básico
@@ -288,7 +289,10 @@ def register():
             if existing_email:
                 flash('Ese correo electrónico ya está registrado. Por favor, usa otro.', 'danger')
                 return render_template('register.html', actividad_opciones=actividad_opciones, capacidad_opciones=capacidad_opciones, participacion_opciones=participacion_opciones, tipo_sangre_opciones=tipo_sangre_opciones, provincia_opciones=provincia_opciones)
+        else:
+            email = None # Asegurarse de que el email sea None si no se proporciona
 
+        # Eliminado el argumento 'rounds' de la llamada a generate_password_hash
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         avatar_filename = None
 
@@ -338,7 +342,7 @@ def register():
             empresa=empresa,
             cedula=cedula,
             direccion=direccion,
-            email=email, # Asignar el email normalizado
+            email=email, # Asignar el email normalizado (puede ser None)
             actividad=actividad if actividad != "No Aplica" else None,
             capacidad=capacidad if capacidad != "Seleccionar Capacidad" else None,
             participacion=participacion if participacion != "No Aplica" else None,
