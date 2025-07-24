@@ -84,6 +84,62 @@
     body {
         padding-top: 70px; /* Ajusta este valor según la altura de tu navbar */
     }
+
+    /* NUEVOS ESTILOS para el botón flotante (FAB) de backup */
+    .fab-container-backup {
+        position: fixed;
+        bottom: 140px; /* Ajusta la posición para que no choque con otros FABs */
+        right: 20px;
+        z-index: 2000;
+    }
+    .fab-button-backup {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        transition: all 0.3s ease;
+        background-color: #6f42c1; /* Color púrpura (ejemplo) */
+        color: #ffffff;
+        border: none;
+        text-decoration: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .fab-button-backup:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        background-color: #5a359a; /* Tono más oscuro al pasar el ratón */
+    }
+
+    /* Ajusta los otros FABs si es necesario para dejar espacio */
+    /* Si el botón de backup está en la misma columna que otros FABs, ajusta sus posiciones */
+    /* Por ejemplo, si tienes un FAB de "añadir" en la parte inferior derecha */
+    /* .btn-add-route {
+        bottom: 140px;
+    } */
+
+    /* Media query para pantallas pequeñas (móviles) */
+    @media (max-width: 768px) {
+        .fab-container-backup {
+            bottom: 120px; /* Ajuste para móviles */
+            right: 15px;
+        }
+        /* Ajusta otros FABs si se superponen en móvil */
+        /* .fab-container-export {
+            bottom: 190px;
+            right: 15px;
+        }
+        .btn-add-route {
+            bottom: 40px;
+            right: 15px;
+        }
+        .fab-container-back {
+            bottom: 40px;
+            left: 15px;
+        } */
+    }
 </style>
 {% endblock %}
 
@@ -290,8 +346,25 @@
     </div>
 </div>
 
+{# NUEVO BOTÓN FLOTANTE PARA BACKUP (Solo para Superuser) #}
+{% if session.get('role') == 'Superuser' %}
+<div class="fab-container-backup">
+    <button type="button" class="fab-button-backup" title="Hacer Backup de la Base de Datos" onclick="confirmBackup()">
+        <i class="fas fa-database"></i> {# Icono de base de datos #}
+    </button>
+</div>
+{% endif %}
+
+{# Botón flotante para volver atrás #}
+<div class="fab-container-back">
+    <a href="{{ url_for('home') }}" class="fab-button-back" title="Volver a Inicio">
+        <i class="fas fa-arrow-left"></i> {# Icono de flecha izquierda #}
+    </a>
+</div>
+
 {# Script para html2canvas para exportar a JPG #}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const exportMyProfileJpgBtn = document.getElementById('exportMyProfileJpgBtn');
@@ -328,12 +401,28 @@
             });
         }
     });
-</script>
 
-{# Botón flotante para volver atrás #}
-<div class="fab-container-back">
-    <a href="{{ url_for('home') }}" class="fab-button-back" title="Volver a Inicio">
-        <i class="fas fa-arrow-left"></i> {# Icono de flecha izquierda #}
-    </a>
-</div>
+    // Función para el botón de backup
+    function confirmBackup() {
+        if (confirm('¿Estás seguro de que quieres hacer un backup de la base de datos? Esto puede tomar un momento.')) {
+            // Crear un formulario dinámico para enviar la solicitud POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("perfil.backup_database") }}'; // Apunta a la nueva ruta de backup
+
+            // Añadir el token CSRF si lo estás usando
+            const csrfToken = document.querySelector('input[name="csrf_token"]');
+            if (csrfToken) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'csrf_token';
+                hiddenInput.value = csrfToken.value;
+                form.appendChild(hiddenInput);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
 {% endblock %}

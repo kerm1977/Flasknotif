@@ -1,9 +1,39 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app 
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, send_file
 # Importa db y User desde 'models' para evitar la importación circular.
 from models import db, User 
 import os
 from datetime import datetime, date # Importar date para manejar fechas
 from werkzeug.utils import secure_filename # Importar para manejo de archivos
+import shutil # Importar para copiar archivos (para backup)
+from functools import wraps # Importar wraps desde functools - ¡CORRECCIÓN AQUÍ!
+
+# Asumo que role_required está definido globalmente o se importa desde app.py o un archivo de utilidades.
+# Si no es así, necesitarías importarlo:
+# from app import role_required # O desde donde lo tengas definido
+# DECORADOR PARA ROLES (Si no lo importas de app.py, puedes tenerlo aquí o en un archivo de utilidades)
+def role_required(roles):
+    """
+    Decorador para restringir el acceso a rutas basadas en roles.
+    `roles` puede ser una cadena (un solo rol) o una lista de cadenas (múltiples roles).
+    """
+    if not isinstance(roles, list):
+        roles = [roles]
+
+    def decorator(f):
+        @wraps(f) # Importar wraps desde functools
+        def decorated_function(*args, **kwargs):
+            if 'logged_in' not in session or not session['logged_in']:
+                flash('Por favor, inicia sesión para acceder a esta página.', 'info')
+                return redirect(url_for('login'))
+            
+            user_role = session.get('role')
+            if user_role not in roles:
+                flash('No tienes permiso para acceder a esta página.', 'danger')
+                return redirect(url_for('home')) # O a una página de "Acceso Denegado"
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 
 perfil_bp = Blueprint('perfil', __name__)
 
@@ -113,3 +143,36 @@ def editar_perfil():
         capacidad_opciones=capacidad_opciones,
         participacion_opciones=participacion_opciones
     )
+
+# NUEVA RUTA PARA BACKUP DE LA BASE DE DATOS DENTRO DEL BLUEPRINT 'perfil'
+@perfil_bp.route('/backup_database', methods=['POST'])
+@role_required('Superuser') # Solo Superusers pueden hacer backup
+def backup_database():
+    try:
+        # Ruta de la base de datos actual (asumiendo SQLite en la carpeta 'instance')
+        # Asegúrate de que 'instance' esté en la misma carpeta que app.py o ajusta la ruta
+        db_path = os.path.join(current_app.instance_path, 'db.db')
+        
+        # Crear la carpeta de backups si no existe
+        backup_folder = os.path.join(current_app.root_path, 'backups')
+        os.makedirs(backup_folder, exist_ok=True)
+
+        # Nombre del archivo de backup con marca de tiempo
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = f'db_backup_{timestamp}.db'
+        backup_filepath = os.path.join(backup_folder, backup_filename)
+
+        # Copiar el archivo de la base de datos
+        shutil.copyfile(db_path, backup_filepath)
+
+        flash(f'Backup de la base de datos "{backup_filename}" creado exitosamente.', 'success')
+        
+        # Permitir la descarga directa del backup
+        return send_file(backup_filepath, as_attachment=True, download_name=backup_filename)
+
+    except Exception as e:
+        flash(f'Error al crear el backup de la base de datos: {e}', 'danger')
+        current_app.logger.error(f"Error al crear backup de la base de datos: {e}")
+        # Redirige a donde el usuario estaba o a una página de administración
+        return redirect(request.referrer or url_for('perfil.ver_perfil')) # Redirige al perfil después del backup
+
