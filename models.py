@@ -1,3 +1,5 @@
+# Dentro de tu archivo models.py, busca la clase User y modifica la línea del email.
+
 # models.py
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -624,6 +626,11 @@ class Ruta(db.Model):
     # NUEVOS CAMPOS: fecha y precio
     fecha = db.Column(db.Date, nullable=True) # Campo para la fecha de la ruta
     precio = db.Column(db.Float, nullable=True) # Campo para el precio de la ruta
+
+    # NUEVOS CAMPOS PARA ARCHIVOS DE MAPA
+    gpx_file_url = db.Column(db.String(255), nullable=True)
+    kml_file_url = db.Column(db.String(255), nullable=True)
+    kmz_file_url = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f"Ruta(Nombre: {self.nombre}, Categoría: {self.provincia}, Fecha: {self.fecha}, Precio: {self.precio})" # Actualizado el __repr__

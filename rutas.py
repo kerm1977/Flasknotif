@@ -1,5 +1,5 @@
 # rutas.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, make_response, send_from_directory
 from models import db, Ruta # Importa db y el nuevo modelo Ruta
 from functools import wraps # Importar wraps para el decorador role_required
 import json
@@ -8,9 +8,31 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as pdf_canvas # Renombrado para evitar conflicto con Flask canvas
 from datetime import datetime, date # Importar datetime y date para manejar fechas
 import re # NUEVO: Importar re para expresiones regulares
+import os # Importar os para manejo de rutas de archivo
+from werkzeug.utils import secure_filename # Para nombres de archivo seguros
 
 # Crea un Blueprint para el módulo de rutas
 rutas_bp = Blueprint('rutas', __name__, template_folder='templates')
+
+# Configuración para subida de archivos de mapa
+MAP_FILES_UPLOAD_FOLDER = os.path.join(rutas_bp.root_path, 'static', 'uploads', 'map_files')
+ALLOWED_MAP_EXTENSIONS = {'gpx', 'kml', 'kmz'}
+
+# Asegúrate de que la carpeta de subidas de mapas exista
+os.makedirs(MAP_FILES_UPLOAD_FOLDER, exist_ok=True)
+
+# Adjuntando MAP_FILES_UPLOAD_FOLDER al objeto 'app' para acceso global
+# Esto es necesario si los blueprints necesitan acceder a él a través de current_app
+# Aunque en este caso se usa directamente en rutas.py, es una buena práctica si otros módulos lo necesitaran.
+# Puedes añadir esto en app.py si prefieres una configuración centralizada.
+# Por ahora, lo manejaremos directamente aquí.
+
+def allowed_map_file(filename):
+    """
+    Verifica si la extensión del archivo de mapa está permitida.
+    """
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_MAP_EXTENSIONS
 
 # Lista de provincias de Costa Rica
 PROVINCIAS = ["Alajuela", "Cartago", "Heredia", "Puntarenas", "Limón", "Guanacaste", "San José"]
@@ -175,20 +197,12 @@ def ver_rutas():
                            rutas_por_categoria=rutas_por_categoria,
                            categorias_busqueda=CATEGORIAS_BUSQUEDA,
                            provincia_seleccionada=categoria_seleccionada)
-
-
-
-
-
-
-
     
 @rutas_bp.route('/rutas/crear', methods=['GET', 'POST'])
 @role_required('Superuser')
 def crear_ruta():
     if request.method == 'POST':
         nombre = request.form['nombre']
-        # El campo 'provincia' del formulario ahora almacenará la categoría seleccionada
         categoria = request.form['provincia'] 
         detalle = request.form['detalle']
         enlace_video = request.form.get('enlace_video')
@@ -208,11 +222,45 @@ def crear_ruta():
         precio = None
         if precio_str:
             try:
-                # Convertir directamente a float
                 precio = float(precio_str)
             except ValueError:
                 flash('Formato de precio inválido. Por favor, ingresa un número válido.', 'danger')
                 return redirect(url_for('rutas.crear_ruta'))
+
+        # Manejo de subida de archivos de mapa
+        gpx_file_url = None
+        kml_file_url = None
+        kmz_file_url = None
+
+        if 'gpx_file' in request.files:
+            gpx_file = request.files['gpx_file']
+            if gpx_file and allowed_map_file(gpx_file.filename):
+                filename = secure_filename(gpx_file.filename)
+                gpx_path = os.path.join(MAP_FILES_UPLOAD_FOLDER, filename)
+                gpx_file.save(gpx_path)
+                gpx_file_url = 'uploads/map_files/' + filename
+            elif gpx_file.filename != '':
+                flash('Tipo de archivo GPX no permitido.', 'warning')
+
+        if 'kml_file' in request.files:
+            kml_file = request.files['kml_file']
+            if kml_file and allowed_map_file(kml_file.filename):
+                filename = secure_filename(kml_file.filename)
+                kml_path = os.path.join(MAP_FILES_UPLOAD_FOLDER, filename)
+                kml_file.save(kml_path)
+                kml_file_url = 'uploads/map_files/' + filename
+            elif kml_file.filename != '':
+                flash('Tipo de archivo KML no permitido.', 'warning')
+
+        if 'kmz_file' in request.files:
+            kmz_file = request.files['kmz_file']
+            if kmz_file and allowed_map_file(kmz_file.filename):
+                filename = secure_filename(kmz_file.filename)
+                kmz_path = os.path.join(MAP_FILES_UPLOAD_FOLDER, filename)
+                kmz_file.save(kmz_path)
+                kmz_file_url = 'uploads/map_files/' + filename
+            elif kmz_file.filename != '':
+                flash('Tipo de archivo KMZ no permitido.', 'warning')
 
 
         if not nombre or not categoria:
@@ -225,7 +273,10 @@ def crear_ruta():
             detalle=detalle,
             enlace_video=enlace_video,
             fecha=fecha, # Asignar la fecha procesada
-            precio=precio # Asignar el precio procesado
+            precio=precio, # Asignar el precio procesado
+            gpx_file_url=gpx_file_url,
+            kml_file_url=kml_file_url,
+            kmz_file_url=kmz_file_url
         )
         try:
             db.session.add(nueva_ruta)
@@ -251,7 +302,6 @@ def editar_ruta(ruta_id):
 
     if request.method == 'POST':
         ruta.nombre = request.form['nombre']
-        # El campo 'provincia' del formulario ahora almacenará la categoría seleccionada
         ruta.provincia = request.form['provincia'] 
         ruta.detalle = request.form['detalle']
         ruta.enlace_video = request.form.get('enlace_video')
@@ -271,11 +321,48 @@ def editar_ruta(ruta_id):
         ruta.precio = None # Resetear el precio por si se envía vacío
         if precio_str:
             try:
-                # Convertir directamente a float
-                ruta.precio = float(precio_str)
+                precio = float(precio_str)
             except ValueError:
                 flash('Formato de precio inválido. Por favor, ingresa un número válido.', 'danger')
                 return redirect(url_for('rutas.editar_ruta', ruta_id=ruta.id))
+        
+        # Manejo de subida de archivos de mapa para edición
+        # Si se sube un nuevo archivo, reemplaza el existente
+        if 'gpx_file' in request.files:
+            gpx_file = request.files['gpx_file']
+            if gpx_file and allowed_map_file(gpx_file.filename):
+                filename = secure_filename(gpx_file.filename)
+                gpx_path = os.path.join(MAP_FILES_UPLOAD_FOLDER, filename)
+                gpx_file.save(gpx_path)
+                ruta.gpx_file_url = 'uploads/map_files/' + filename
+            elif gpx_file.filename == '' and 'clear_gpx' in request.form: # Si se marca para borrar y no se sube nuevo
+                ruta.gpx_file_url = None
+            elif gpx_file.filename != '': # Si hay un archivo pero no permitido
+                flash('Tipo de archivo GPX no permitido.', 'warning')
+
+        if 'kml_file' in request.files:
+            kml_file = request.files['kml_file']
+            if kml_file and allowed_map_file(kml_file.filename):
+                filename = secure_filename(kml_file.filename)
+                kml_path = os.path.join(MAP_FILES_UPLOAD_FOLDER, filename)
+                kml_file.save(kml_path)
+                ruta.kml_file_url = 'uploads/map_files/' + filename
+            elif kml_file.filename == '' and 'clear_kml' in request.form:
+                ruta.kml_file_url = None
+            elif kml_file.filename != '':
+                flash('Tipo de archivo KML no permitido.', 'warning')
+
+        if 'kmz_file' in request.files:
+            kmz_file = request.files['kmz_file']
+            if kmz_file and allowed_map_file(kmz_file.filename):
+                filename = secure_filename(kmz_file.filename)
+                kmz_path = os.path.join(MAP_FILES_UPLOAD_FOLDER, filename)
+                kmz_file.save(kmz_path)
+                ruta.kmz_file_url = 'uploads/map_files/' + filename
+            elif kmz_file.filename == '' and 'clear_kmz' in request.form:
+                ruta.kmz_file_url = None
+            elif kmz_file.filename != '':
+                flash('Tipo de archivo KMZ no permitido.', 'warning')
         
         try:
             db.session.commit()
@@ -310,6 +397,20 @@ def eliminar_ruta(ruta_id):
         return redirect(url_for('rutas.ver_rutas'))
 
     try:
+        # Opcional: Eliminar archivos físicos asociados antes de borrar el registro de la DB
+        if ruta.gpx_file_url:
+            file_path = os.path.join(rutas_bp.root_path, 'static', ruta.gpx_file_url)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        if ruta.kml_file_url:
+            file_path = os.path.join(rutas_bp.root_path, 'static', ruta.kml_file_url)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        if ruta.kmz_file_url:
+            file_path = os.path.join(rutas_bp.root_path, 'static', ruta.kmz_file_url)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
         db.session.delete(ruta)
         db.session.commit()
         flash('Ruta eliminada exitosamente.', 'success')
@@ -319,6 +420,60 @@ def eliminar_ruta(ruta_id):
         current_app.logger.error(f"Error al eliminar ruta {ruta_id}: {e}") # Registrar el error
     
     return redirect(url_for('rutas.ver_rutas'))
+
+# Rutas para descargar archivos de mapa
+@rutas_bp.route('/rutas/download/gpx/<int:ruta_id>')
+@role_required(['Superuser', 'Usuario Regular'])
+def download_gpx(ruta_id):
+    ruta = db.session.get(Ruta, ruta_id)
+    if not ruta or not ruta.gpx_file_url:
+        flash('Archivo GPX no encontrado.', 'danger')
+        return redirect(url_for('rutas.detalle_ruta', ruta_id=ruta_id))
+    
+    # Asegúrate de que el archivo exista antes de intentar enviarlo
+    directory = os.path.join(rutas_bp.root_path, 'static', 'uploads', 'map_files')
+    filename = os.path.basename(ruta.gpx_file_url)
+    
+    if not os.path.exists(os.path.join(directory, filename)):
+        flash('El archivo GPX no se encuentra en el servidor.', 'danger')
+        return redirect(url_for('rutas.detalle_ruta', ruta_id=ruta_id))
+
+    return send_from_directory(directory, filename, as_attachment=True)
+
+@rutas_bp.route('/rutas/download/kml/<int:ruta_id>')
+@role_required(['Superuser', 'Usuario Regular'])
+def download_kml(ruta_id):
+    ruta = db.session.get(Ruta, ruta_id)
+    if not ruta or not ruta.kml_file_url:
+        flash('Archivo KML no encontrado.', 'danger')
+        return redirect(url_for('rutas.detalle_ruta', ruta_id=ruta_id))
+    
+    directory = os.path.join(rutas_bp.root_path, 'static', 'uploads', 'map_files')
+    filename = os.path.basename(ruta.kml_file_url)
+
+    if not os.path.exists(os.path.join(directory, filename)):
+        flash('El archivo KML no se encuentra en el servidor.', 'danger')
+        return redirect(url_for('rutas.detalle_ruta', ruta_id=ruta_id))
+
+    return send_from_directory(directory, filename, as_attachment=True)
+
+@rutas_bp.route('/rutas/download/kmz/<int:ruta_id>')
+@role_required(['Superuser', 'Usuario Regular'])
+def download_kmz(ruta_id):
+    ruta = db.session.get(Ruta, ruta_id)
+    if not ruta or not ruta.kmz_file_url:
+        flash('Archivo KMZ no encontrado.', 'danger')
+        return redirect(url_for('rutas.detalle_ruta', ruta_id=ruta_id))
+    
+    directory = os.path.join(rutas_bp.root_path, 'static', 'uploads', 'map_files')
+    filename = os.path.basename(ruta.kmz_file_url)
+
+    if not os.path.exists(os.path.join(directory, filename)):
+        flash('El archivo KMZ no se encuentra en el servidor.', 'danger')
+        return redirect(url_for('rutas.detalle_ruta', ruta_id=ruta_id))
+
+    return send_from_directory(directory, filename, as_attachment=True)
+
 
 @rutas_bp.route('/rutas/exportar/txt/<int:ruta_id>')
 # @role_required(['Superuser', 'Usuario Regular']) # COMENTADO
@@ -567,3 +722,4 @@ def exportar_todas_rutas_txt():
 def exportar_todas_rutas_jpg():
     flash('La exportación de todas las rutas a JPG desde el servidor no está implementada directamente. Considere usar una solución de captura de pantalla en el cliente (navegador) o un servicio externo si es indispensable.', 'info')
     return redirect(url_for('rutas.ver_rutas', categoria=request.args.get('categoria'))) # Redirigir a la vista actual
+

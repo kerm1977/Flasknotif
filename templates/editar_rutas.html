@@ -90,7 +90,7 @@
         {% endif %}
     {% endwith %}
 
-    <form id="main-form" method="POST" action="{{ url_for('rutas.editar_ruta', ruta_id=ruta.id) }}">
+    <form id="main-form" method="POST" action="{{ url_for('rutas.editar_ruta', ruta_id=ruta.id) }}" enctype="multipart/form-data">
         {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
         <div class="form-group mb-3">
             <label for="nombre">Nombre de la Ruta:</label>
@@ -127,6 +127,47 @@
         <div class="form-group mb-3">
             <label for="detalle">Detalle de la Ruta:</label>
             <textarea class="form-control" id="detalle" name="detalle" rows="10">{{ ruta.detalle }}</textarea>
+        </div>
+
+        <h4 class="text-warning mt-4">Archivos de Mapa (Opcional)</h4>
+        <div class="mb-3">
+            <label for="gpx_file" class="form-label">Archivo GPX</label>
+            <input class="form-control" type="file" id="gpx_file" name="gpx_file" accept=".gpx">
+            <div class="form-text">Sube un nuevo archivo GPX para reemplazar el actual.</div>
+            {% if ruta.gpx_file_url %}
+                <div class="form-text mt-1">Archivo actual: <a href="{{ url_for('rutas.download_gpx', ruta_id=ruta.id) }}" target="_blank">{{ ruta.gpx_file_url.split('/')[-1] }}</a>
+                    <div class="form-check form-check-inline ms-3">
+                        <input class="form-check-input" type="checkbox" id="clear_gpx" name="clear_gpx" value="1">
+                        <label class="form-check-label" for="clear_gpx">Borrar archivo actual</label>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="kml_file" class="form-label">Archivo KML</label>
+            <input class="form-control" type="file" id="kml_file" name="kml_file" accept=".kml">
+            <div class="form-text">Sube un nuevo archivo KML para reemplazar el actual.</div>
+            {% if ruta.kml_file_url %}
+                <div class="form-text mt-1">Archivo actual: <a href="{{ url_for('rutas.download_kml', ruta_id=ruta.id) }}" target="_blank">{{ ruta.kml_file_url.split('/')[-1] }}</a>
+                    <div class="form-check form-check-inline ms-3">
+                        <input class="form-check-input" type="checkbox" id="clear_kml" name="clear_kml" value="1">
+                        <label class="form-check-label" for="clear_kml">Borrar archivo actual</label>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="kmz_file" class="form-label">Archivo KMZ</label>
+            <input class="form-control" type="file" id="kmz_file" name="kmz_file" accept=".kmz">
+            <div class="form-text">Sube un nuevo archivo KMZ para reemplazar el actual.</div>
+            {% if ruta.kmz_file_url %}
+                <div class="form-text mt-1">Archivo actual: <a href="{{ url_for('rutas.download_kmz', ruta_id=ruta.id) }}" target="_blank">{{ ruta.kmz_file_url.split('/')[-1] }}</a>
+                    <div class="form-check form-check-inline ms-3">
+                        <input class="form-check-input" type="checkbox" id="clear_kmz" name="clear_kmz" value="1">
+                        <label class="form-check-label" for="clear_kmz">Borrar archivo actual</label>
+                    </div>
+                </div>
+            {% endif %}
         </div>
         {# El botón de submit se movió a un FAB #}
     </form>

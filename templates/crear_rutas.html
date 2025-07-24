@@ -25,7 +25,7 @@
             justify-content: center;
             font-size: 1.8rem; /* Tamaño del icono */
             transition: all 0.3s ease;
-            background-color: #ffc107; /* Color de fondo warning (naranja */
+            background-color: #ffc107; /* Color de fondo warning (naranja) */
             color: #212529; /* Color de texto oscuro para contraste */
             border: none; /* Asegurar que no haya borde */
             text-decoration: none; /* Eliminar el subrayado del enlace */
@@ -87,7 +87,7 @@
         {% endif %}
     {% endwith %}
 
-    <form id="main-form" method="POST" action="{{ url_for('rutas.crear_ruta') }}">
+    <form id="main-form" method="POST" action="{{ url_for('rutas.crear_ruta') }}" enctype="multipart/form-data">
         {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
         <div class="form-group mb-3">
             <label for="nombre">Nombre de la Ruta:</label>
@@ -126,6 +126,24 @@
             <label for="detalle">Detalle de la Ruta:</label>
             <textarea class="form-control" id="detalle" name="detalle" rows="10"></textarea>
         </div>
+
+        <h4 class="text-warning mt-4">Archivos de Mapa (Opcional)</h4>
+        <div class="mb-3">
+            <label for="gpx_file" class="form-label">Archivo GPX</label>
+            <input class="form-control" type="file" id="gpx_file" name="gpx_file" accept=".gpx">
+            <div class="form-text">Sube un archivo GPX para rutas de GPS (ej. Organic Maps).</div>
+        </div>
+        <div class="mb-3">
+            <label for="kml_file" class="form-label">Archivo KML</label>
+            <input class="form-control" type="file" id="kml_file" name="kml_file" accept=".kml">
+            <div class="form-text">Sube un archivo KML (ej. Google Earth, Maps.me).</div>
+        </div>
+        <div class="mb-3">
+            <label for="kmz_file" class="form-label">Archivo KMZ</label>
+            <input class="form-control" type="file" id="kmz_file" name="kmz_file" accept=".kmz">
+            <div class="form-text">Sube un archivo KMZ (comprimido, ej. Google Earth, Maps.me).</div>
+        </div>
+
         {# El botón de submit se movió a un FAB #}
     </form>
 </div>

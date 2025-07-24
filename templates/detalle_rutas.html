@@ -52,6 +52,38 @@
             <div class="">{{ ruta.detalle | safe }}</div>
         </div>
         {# Se eliminan las referencias a fecha_creacion y fecha_modificacion #}
+
+        {# NUEVA SECCIÓN: Archivos de Mapa #}
+        <div class="detail-section mt-4">
+            <p class="text-warning">Archivos de Mapa:</p>
+            <div class="d-flex flex-wrap gap-3">
+                {% if ruta.gpx_file_url %}
+                    <a href="{{ url_for('rutas.download_gpx', ruta_id=ruta.id) }}" class="btn btn-outline-success btn-sm d-flex align-items-center" title="Abrir con Organic Maps o aplicación compatible" target="_blank">
+                        <i class="fas fa-map-marker-alt me-1"></i> GPX
+                    </a>
+                {% else %}
+                    <span class="text-muted">No hay archivo GPX</span>
+                {% endif %}
+
+                {% if ruta.kml_file_url %}
+                    <a href="{{ url_for('rutas.download_kml', ruta_id=ruta.id) }}" class="btn btn-outline-info btn-sm d-flex align-items-center" title="Abrir con Maps.me, Google Earth o aplicación compatible" target="_blank">
+                        <i class="fas fa-map me-1"></i> KML
+                    </a>
+                {% else %}
+                    <span class="text-muted">No hay archivo KML</span>
+                {% endif %}
+
+                {% if ruta.kmz_file_url %}
+                    <a href="{{ url_for('rutas.download_kmz', ruta_id=ruta.id) }}" class="btn btn-outline-primary btn-sm d-flex align-items-center" title="Abrir con Maps.me, Google Earth o aplicación compatible" target="_blank">
+                        <i class="fas fa-map-marked-alt me-1"></i> KMZ
+                    </a>
+                {% else %}
+                    <span class="text-muted">No hay archivo KMZ</span>
+                {% endif %}
+            </div>
+        </div>
+        {# FIN NUEVA SECCIÓN #}
+
     </div>
 </div>
 
