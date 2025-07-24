@@ -205,6 +205,10 @@
                                             {{ ruta.nombre }}
                                             {% if ruta.fecha %} - {{ ruta.fecha.strftime('%d/%m/%y') }}{% endif %}
                                             {% if ruta.precio is not none %} - ¢{{ ruta.precio|int }}{% endif %}
+                                            {# ICONO DE MAPA: Mostrar si la ruta tiene algún archivo de mapa #}
+                                            {% if ruta.gpx_file_url or ruta.kml_file_url or ruta.kmz_file_url %}
+                                                <i class="fas fa-map-marker-alt ms-2 text-primary" title="Esta ruta tiene un mapa asociado"></i>
+                                            {% endif %}
                                         </a>
                                     </div>
                                 </li>
