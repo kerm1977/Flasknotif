@@ -25,6 +25,8 @@ from itinerario import itinerario_bp # NUEVA: Importa el Blueprint del itinerari
 from aboutus import aboutus_bp # NUEVA: Importa el Blueprint de AboutUs
 from rutas import rutas_bp # NUEVA: Importa el Blueprint de Rutas
 from version import version_bp, Version # NUEVA: Importa el Blueprint de Version
+from files import files_bp # NUEVA: Importa el Blueprint de Files
+
 
 
 
@@ -43,10 +45,12 @@ CALENDAR_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 
 SONGS_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'songs') # NUEVA: Carpeta para archivos de música
 COVERS_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'covers') # NUEVA: Carpeta para carátulas de álbumes
 ABOUTUS_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'aboutus_images') # NUEVA: Carpeta para imágenes de AboutUs
+UPLOAD_FILES_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'files') # NUEVA: Carpeta para archivos generales
 
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 ALLOWED_MUSIC_EXTENSIONS = {'mp3', 'wav', 'ogg'} # NUEVA: Extensiones de música permitidas
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROJECT_IMAGE_UPLOAD_FOLDER'] = PROJECT_IMAGE_UPLOAD_FOLDER
 app.config['NOTE_IMAGE_UPLOAD_FOLDER'] = NOTE_IMAGE_UPLOAD_FOLDER # Guarda la ruta en config
@@ -56,6 +60,7 @@ app.config['CALENDAR_IMAGE_UPLOAD_FOLDER'] = CALENDAR_IMAGE_UPLOAD_FOLDER # NUEV
 app.config['SONGS_UPLOAD_FOLDER'] = SONGS_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de canciones
 app.config['COVERS_UPLOAD_FOLDER'] = COVERS_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de carátulas
 app.config['ABOUTUS_IMAGE_UPLOAD_FOLDER'] = ABOUTUS_IMAGE_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de imágenes de AboutUs
+app.config['UPLOAD_FILES_FOLDER'] = UPLOAD_FILES_FOLDER # NUEVA: Adjuntar la ruta de archivos generales
 
 
 # Asegúrate de que las carpetas de subidas existan
@@ -68,6 +73,7 @@ os.makedirs(CALENDAR_IMAGE_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la
 os.makedirs(SONGS_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para canciones exista
 os.makedirs(COVERS_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para carátulas exista
 os.makedirs(ABOUTUS_IMAGE_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para imágenes de AboutUs exista
+os.makedirs(UPLOAD_FILES_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para archivos generales exista
 
 
 # Inicializa db, bcrypt y migrate con la instancia de la aplicación
@@ -98,6 +104,7 @@ app.CALENDAR_IMAGE_UPLOAD_FOLDER = CALENDAR_IMAGE_UPLOAD_FOLDER # NUEVA: Adjunta
 app.SONGS_UPLOAD_FOLDER = SONGS_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de canciones
 app.COVERS_UPLOAD_FOLDER = COVERS_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de carátulas
 app.ABOUTUS_IMAGE_UPLOAD_FOLDER = ABOUTUS_IMAGE_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de imágenes de AboutUs
+app.UPLOAD_FILES_FOLDER = UPLOAD_FILES_FOLDER # NUEVA: Adjuntar la ruta de archivos generales
 
 
 # NUEVOS FILTROS DE JINJA2: Para formatear moneda y parsear JSON en las plantillas
@@ -451,6 +458,7 @@ app.register_blueprint(itinerario_bp, url_prefix='/itinerario') # NUEVA: Registr
 app.register_blueprint(aboutus_bp, url_prefix='/aboutus') # NUEVA: Registro del Blueprint de AboutUs
 app.register_blueprint(rutas_bp, url_prefix='/rutas') # NUEVA: Registro del Blueprint de Rutas
 app.register_blueprint(version_bp, url_prefix='/version') # NUEVA: Registro del Blueprint de Version
+app.register_blueprint(files_bp, url_prefix='/files') # NUEVA: Registro del Blueprint de Files
 
 
 if __name__ == '__main__':

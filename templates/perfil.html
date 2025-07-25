@@ -332,6 +332,11 @@
                         </a>
                     {% endif %}
 
+                    {# NUEVO: Enlace para acceder a la gestión de archivos #}
+                    <a href="{{ url_for('files.ver_files') }}" class="btn btn-info btn-lg d-flex align-items-center">
+                        <i class="fas fa-folder me-2"></i> Mis Archivos
+                    </a>
+
                     {# Botón para exportar el carnet a JPG #}
                     <button type="button" class="btn btn-secondary dropdown-toggle btn-lg" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                         Exportar Perfil
@@ -404,25 +409,58 @@
 
     // Función para el botón de backup
     function confirmBackup() {
-        if (confirm('¿Estás seguro de que quieres hacer un backup de la base de datos? Esto puede tomar un momento.')) {
-            // Crear un formulario dinámico para enviar la solicitud POST
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ url_for("perfil.backup_database") }}'; // Apunta a la nueva ruta de backup
+        // Reemplazado confirm() con un modal personalizado
+        customConfirm('¿Estás seguro de que quieres hacer un backup de la base de datos? Esto puede tomar un momento.', function(result) {
+            if (result) {
+                // Crear un formulario dinámico para enviar la solicitud POST
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("perfil.backup_database") }}'; // Apunta a la nueva ruta de backup
 
-            // Añadir el token CSRF si lo estás usando
-            const csrfToken = document.querySelector('input[name="csrf_token"]');
-            if (csrfToken) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'csrf_token';
-                hiddenInput.value = csrfToken.value;
-                form.appendChild(hiddenInput);
+                // Añadir el token CSRF si lo estás usando
+                const csrfToken = document.querySelector('input[name="csrf_token"]');
+                if (csrfToken) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'csrf_token';
+                    hiddenInput.value = csrfToken.value;
+                    form.appendChild(hiddenInput);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
             }
+        });
+    }
 
-            document.body.appendChild(form);
-            form.submit();
-        }
+    // Modal de Confirmación Personalizado (copiado de ver_files.html para consistencia)
+    function customConfirm(message, callback) {
+        const modalHtml = `
+            <div class="custom-modal-overlay" id="customConfirmModal" style="display: flex;">
+                <div class="custom-modal-content">
+                    <h5 id="customConfirmMessage">${message}</h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-danger" id="customConfirmYes">Sí</button>
+                        <button type="button" class="btn btn-secondary" id="customConfirmNo">No</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = document.getElementById('customConfirmModal');
+        const yesBtn = document.getElementById('customConfirmYes');
+        const noBtn = document.getElementById('customConfirmNo');
+
+        yesBtn.onclick = () => {
+            modal.remove();
+            callback(true);
+        };
+
+        noBtn.onclick = () => {
+            modal.remove();
+            callback(false);
+        };
     }
 </script>
 {% endblock %}

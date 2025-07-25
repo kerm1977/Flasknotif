@@ -663,3 +663,28 @@ class PushSubscription(db.Model):
 # Después de añadir el modelo, recuerda ejecutar una migración de base de datos
 # si estás usando Flask-Migrate (ej: flask db migrate, flask db upgrade)
 # Si no usas Flask-Migrate, necesitarás recrear tu base de datos o añadir la tabla manualmente.
+
+
+# NUEVO MODELO: File (para la gestión de archivos)
+class File(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    original_filename = db.Column(db.String(255), nullable=False)
+    unique_filename = db.Column(db.String(255), unique=True, nullable=False) # Nombre único en el servidor
+    file_path = db.Column(db.String(500), nullable=False) # Ruta relativa desde static/uploads/files/
+    file_type = db.Column(db.String(50), nullable=False) # 'image', 'audio', 'video', 'document', 'map', 'other'
+    mime_type = db.Column(db.String(100), nullable=False)
+    upload_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relación con el usuario que subió el archivo
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    uploader = db.relationship('User', backref='uploaded_files')
+
+    is_visible = db.Column(db.Boolean, default=True, nullable=False) # Si debe mostrarse en la lista general
+    is_used = db.Column(db.Boolean, default=False, nullable=False) # Si está siendo utilizado por otra entidad/vista
+
+    def __repr__(self):
+        return f"<File {self.original_filename} ({self.file_type})>"
+
+# Después de añadir el modelo, recuerda ejecutar una migración de base de datos
+# si estás usando Flask-Migrate (ej: flask db migrate, flask db upgrade)
+# Si no usas Flask-Migrate, necesitarás recrear tu base de datos o añadir la tabla manualmente.
