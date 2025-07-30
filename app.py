@@ -26,14 +26,17 @@ from aboutus import aboutus_bp # NUEVA: Importa el Blueprint de AboutUs
 from rutas import rutas_bp # NUEVA: Importa el Blueprint de Rutas
 from version import version_bp, Version # NUEVA: Importa el Blueprint de Version
 from files import files_bp # NUEVA: Importa el Blueprint de Files
-
-
+from btns import btns_bp # Importa el Blueprint desde btns.py
 
 
 from sqlalchemy.exc import IntegrityError # NUEVO: Importar IntegrityError
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# REGISTRA EL BLUEPRINT DE BTNS.PY AQUÍ, ANTES DE DEFINIR CUALQUIER RUTA
+# QUE PUEDA USAR SUS ENDPOINTS EN LAS PLANTILLAS.
+app.register_blueprint(btns_bp)
 
 # Configuración para subida de archivos
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'avatars')

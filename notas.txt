@@ -739,3 +739,22 @@ Poder escuchar y visualizar archivos,  mp3, mp4, avi, aiff, wma, wmv
 poder visualizar archivos como pdf, jpg, png txt docx y demás
 crear un mapa para poder ver los archivos gpx, kml, kmz con geolocalización
 y un buscador por tipo, nombre y fecha de agreado del archivo
+
+
+
+Genial ahora necesito crear un nueva área
+en base.html necesito crear un botón flotante que acceda a un enlace que se va agregar mediante un formularior
+
+para esto necesito un formulario llamado 
+
+btns.py va a contener modelos y absolutamente toda la logistica de esta sección
+
+crear_btns.html
+un input llamad enlace que permita agregar enlaces
+y un botón que permita hacer visible u ocultar el botón
+permitir estar visible en tres estados que puedo seleccionar (Todos(sin Registrarse a la app), Usuarios Regulares, Superusuarios)
+
+además que la información permanezca aun cuando el sitio esté deslogueado y si es necesario trabajarlo desde el backend para garantizar la funcionalidad y la permanencia de los datos lo realizamos con backend hacerlo con javascript, html, css
+no utilizar firebase ni otras tecnologías.. unicamente js, html, css, python, flask, flash
+
+todo tiene que aplicarse únicamente desde base.html y crear_btns.html

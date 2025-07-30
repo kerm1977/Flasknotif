@@ -146,6 +146,25 @@
                 left: 15px;
             }
         }
+        /* Estilos para el separador de mes */
+        .month-separator {
+            /* background-color: #e9ecef; */ /* Eliminado el color de fondo */
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 25px; /* Margen superior para separar de la lista anterior */
+            margin-bottom: 5px; /* Margen inferior reducido para acercar la HR */
+            text-align: center;
+            font-weight: bold;
+            color: #343a40; /* Color de texto oscuro */
+            font-size: 1.2rem;
+        }
+        /* Estilo para la línea horizontal de advertencia */
+        .hr-warning {
+            border: 0;
+            height: 2px;
+            background-color: #ffc107; /* Color warning de Bootstrap */
+            margin-bottom: 15px; /* Margen inferior para separar de la lista siguiente */
+        }
     </style>
 
 <div class="container mt-4">
@@ -175,7 +194,7 @@
     {% for categoria_display in categorias_busqueda %}
         {# Solo procesar si la categoría no es "Todas las Categorías" #}
         {% if categoria_display != 'Todas las Categorías' %}
-            {% set rutas_en_categoria = rutas_por_categoria.get(categoria_display, []) %}
+            {% set rutas_en_categoria = rutas_por_categoria.get(categoria_display) %}
 
             {% if categoria_display == 'Otros' %}
                 {# Mostrar el título "Otros" solo si hay rutas de "Internacional", "Caminatas Programadas" o "Caminatas por Reconocer" #}
@@ -186,8 +205,123 @@
                             <hr>
                         </div>
                     </div>
-                {% endif %}
-            {% elif rutas_en_categoria %}
+                    {# Iterar sobre los subgrupos de "Otros" si existen #}
+                    {% if rutas_por_categoria.get('Internacional') and rutas_por_categoria.get('Internacional').get('rutas_sin_fecha') %}
+                        <div class="mb-4">
+                            <div class="card-header-category mt-5">
+                                <h2 class="text-center text-dark">Internacional</h2>
+                                <hr>
+                            </div>
+                            <div>
+                                <ul class="list-unstyled">
+                                    {% for ruta in rutas_por_categoria.get('Internacional').get('rutas_sin_fecha') %}
+                                        <li class="route-item">
+                                            <div>
+                                                <span class="me-2 text-muted">{{ loop.index }}.</span>
+                                                <a href="{{ url_for('rutas.detalle_ruta', ruta_id=ruta.id) }}" class="route-name">
+                                                    {{ ruta.nombre }}
+                                                    {% if ruta.fecha %} - {{ ruta.fecha.strftime('%d/%m/%y') }}{% endif %}
+                                                    {% if ruta.precio is not none %} - ¢{{ ruta.precio|int }}{% endif %}
+                                                    {% if ruta.gpx_file_url or ruta.kml_file_url or ruta.kmz_file_url %}
+                                                        <i class="fas fa-map-marker-alt ms-2 text-primary" title="Esta ruta tiene un mapa asociado"></i>
+                                                    {% endif %}
+                                                </a>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if rutas_por_categoria.get('Caminatas por Reconocer') and rutas_por_categoria.get('Caminatas por Reconocer').get('rutas_sin_fecha') %}
+                        <div class="mb-4">
+                            <div class="card-header-category mt-5">
+                                <h2 class="text-center text-dark">Caminatas por Reconocer</h2>
+                                <hr>
+                            </div>
+                            <div>
+                                <ul class="list-unstyled">
+                                    {% for ruta in rutas_por_categoria.get('Caminatas por Reconocer').get('rutas_sin_fecha') %}
+                                        <li class="route-item">
+                                            <div>
+                                                <span class="me-2 text-muted">{{ loop.index }}.</span>
+                                                <a href="{{ url_for('rutas.detalle_ruta', ruta_id=ruta.id) }}" class="route-name">
+                                                    {{ ruta.nombre }}
+                                                    {% if ruta.fecha %} - {{ ruta.fecha.strftime('%d/%m/%y') }}{% endif %}
+                                                    {% if ruta.precio is not none %} - ¢{{ ruta.precio|int }}{% endif %}
+                                                    {% if ruta.gpx_file_url or ruta.kml_file_url or ruta.kmz_file_url %}
+                                                        <i class="fas fa-map-marker-alt ms-2 text-primary" title="Esta ruta tiene un mapa asociado"></i>
+                                                    {% endif %}
+                                                </a>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {# Manejo de Caminatas Programadas dentro de "Otros", agrupadas por mes #}
+                    {% if rutas_por_categoria.get('Caminatas Programadas') %}
+                        <div class="mb-4">
+                            <div class="card-header-category mt-5">
+                                <h2 class="text-center text-dark">Caminatas Programadas</h2>
+                                <hr>
+                            </div>
+                            {% for mes_anio, rutas_mes in rutas_por_categoria.get('Caminatas Programadas').items() %}
+                                {% if mes_anio != 'rutas_sin_fecha' %} {# Excluir el grupo de rutas sin fecha si existe #}
+                                    <div class="month-separator text-end text-warning">{{ mes_anio }}</div>
+                                    
+                                    <div>
+                                        <ul class="list-unstyled">
+                                            {% for ruta in rutas_mes %}
+                                                <li class="route-item">
+                                                    <div>
+                                                        <span class="me-2 text-muted">{{ loop.index }}.</span>
+                                                        <a href="{{ url_for('rutas.detalle_ruta', ruta_id=ruta.id) }}" class="route-name">
+                                                            {{ ruta.nombre }}
+                                                            {% if ruta.fecha %} - {{ ruta.fecha.strftime('%d/%m/%y') }}{% endif %}
+                                                            {% if ruta.precio is not none %} - ¢{{ ruta.precio|int }}{% endif %}
+                                                            {% if ruta.gpx_file_url or ruta.kml_file_url or ruta.kmz_file_url %}
+                                                                <i class="fas fa-map-marker-alt ms-2 text-primary" title="Esta ruta tiene un mapa asociado"></i>
+                                                            {% endif %}
+                                                        </a>
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            {# Si hay rutas de "Caminatas Programadas" sin fecha, mostrarlas al final de su sección #}
+                            {% if rutas_por_categoria.get('Caminatas Programadas').get('rutas_sin_fecha') %}
+                             
+                                    <ul class="list-unstyled">
+                                        {% for ruta in rutas_por_categoria.get('Caminatas Programadas').get('rutas_sin_fecha') %}
+                                            <li class="route-item">
+                                                <div>
+                                                    <span class="me-2 text-muted">{{ loop.index }}.</span>
+                                                    <a href="{{ url_for('rutas.detalle_ruta', ruta_id=ruta.id) }}" class="route-name">
+                                                        {{ ruta.nombre }}
+                                                        {% if ruta.fecha %} - {{ ruta.fecha.strftime('%d/%m/%y') }}{% endif %}
+                                                        {% if ruta.precio is not none %} - ¢{{ ruta.precio|int }}{% endif %}
+                                                        {% if ruta.gpx_file_url or ruta.kml_file_url or ruta.kmz_file_url %}
+                                                            <i class="fas fa-map-marker-alt ms-2 text-primary" title="Esta ruta tiene un mapa asociado"></i>
+                                                        {% endif %}
+                                                    </a>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                {% endif %} {# Fin del if que muestra el título "Otros" #}
+
+            {% elif rutas_en_categoria and rutas_en_categoria.get('rutas_sin_fecha') %} {# Para categorías que no son "Otros" #}
                 {% set has_any_routes = true %} {# Se encontraron rutas en una categoría válida #}
                 <div class="mb-4">
                     <div class="card-header-category mt-5"> {# Sin la clase other-category-title-bg, y sin text-dark aquí #}
@@ -196,7 +330,7 @@
                     </div>
                     <div>
                         <ul class="list-unstyled">
-                            {% for ruta in rutas_en_categoria %}
+                            {% for ruta in rutas_en_categoria.get('rutas_sin_fecha') %}
                                 <li class="route-item">
                                     <div>
                                         {# Mostrar nombre de ruta - fecha - ¢precio, solo si existen #}

@@ -10,6 +10,7 @@ from datetime import datetime, date # Importar datetime y date para manejar fech
 import re # NUEVO: Importar re para expresiones regulares
 import os # Importar os para manejo de rutas de archivo
 from werkzeug.utils import secure_filename # Para nombres de archivo seguros
+from collections import defaultdict # Importar defaultdict para agrupar rutas
 
 # Crea un Blueprint para el módulo de rutas
 rutas_bp = Blueprint('rutas', __name__, template_folder='templates')
@@ -20,12 +21,6 @@ ALLOWED_MAP_EXTENSIONS = {'gpx', 'kml', 'kmz'}
 
 # Asegúrate de que la carpeta de subidas de mapas exista
 os.makedirs(MAP_FILES_UPLOAD_FOLDER, exist_ok=True)
-
-# Adjuntando MAP_FILES_UPLOAD_FOLDER al objeto 'app' para acceso global
-# Esto es necesario si los blueprints necesitan acceder a él a través de current_app
-# Aunque en este caso se usa directamente en rutas.py, es una buena práctica si otros módulos lo necesitaran.
-# Puedes añadir esto en app.py si prefieres una configuración centralizada.
-# Por ahora, lo manejaremos directamente aquí.
 
 def allowed_map_file(filename):
     """
@@ -174,8 +169,9 @@ def ver_rutas():
         query = query.filter(Ruta.provincia != 'Caminatas por Reconocer')
 
 
-    # Obtener todas las rutas filtradas
-    rutas = query.order_by(Ruta.provincia, Ruta.nombre).all()
+    # Obtener todas las rutas filtradas y ordenarlas por fecha
+    # Es importante ordenar por fecha para que la agrupación por mes sea consecutiva
+    rutas = query.order_by(Ruta.fecha.asc(), Ruta.nombre.asc()).all()
     
     # Si no se seleccionó ninguna categoría o se seleccionó "Todas las Categorías",
     # asegúrate de que el dropdown muestre "Todas las Categorías"
@@ -183,15 +179,36 @@ def ver_rutas():
         categoria_seleccionada = 'Todas las Categorías'
     
     # Agrupar las rutas por su "provincia" (que ahora es la categoría)
-    rutas_por_categoria = {}
+    # y luego, si la categoría es "Caminatas Programadas", agrupar por mes y año
+    rutas_por_categoria = defaultdict(lambda: defaultdict(list)) # Anidado para categoría -> mes/año -> rutas
+
+    meses_espanol = {
+        1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+        5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+        9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+    }
+
     for ruta in rutas:
         # Asegurarse de no añadir 'Caminatas por Reconocer' si el usuario no está logueado
         if not user_logged_in and ruta.provincia == 'Caminatas por Reconocer':
             continue # Saltar esta ruta si el usuario no está logueado y es de la categoría restringida
             
-        if ruta.provincia not in rutas_por_categoria:
-            rutas_por_categoria[ruta.provincia] = []
-        rutas_por_categoria[ruta.provincia].append(ruta)
+        if ruta.provincia == 'Caminatas Programadas' and ruta.fecha:
+            # Si es "Caminatas Programadas" y tiene fecha, agrupar por mes y año
+            mes_anio_key = (ruta.fecha.year, ruta.fecha.month)
+            nombre_mes = meses_espanol[ruta.fecha.month]
+            # Usar un formato legible para la clave del mes, por ejemplo "Enero 2024"
+            rutas_por_categoria[ruta.provincia][f"{nombre_mes} {ruta.fecha.year}"].append(ruta)
+        else:
+            # Para otras categorías, seguir agrupando directamente por provincia
+            # Se usa una clave genérica para estas categorías para que el HTML las maneje
+            # como un solo grupo si no se requiere sub-agrupación por mes.
+            # Convertimos la lista de rutas directamente en el valor del defaultdict
+            # para que la estructura sea consistente con el iterado en el template.
+            if 'rutas_sin_fecha' not in rutas_por_categoria[ruta.provincia]:
+                rutas_por_categoria[ruta.provincia]['rutas_sin_fecha'] = []
+            rutas_por_categoria[ruta.provincia]['rutas_sin_fecha'].append(ruta)
+
 
     return render_template('ver_rutas.html', 
                            rutas_por_categoria=rutas_por_categoria,
@@ -609,7 +626,7 @@ def exportar_todas_rutas_pdf():
         flash(f'Categoría de exportación no válida: "{categoria_seleccionada}".', 'danger')
         return _return_empty_pdf_or_txt(is_pdf=True)
 
-    rutas = query.order_by(Ruta.provincia, Ruta.nombre).all()
+    rutas = query.order_by(Ruta.provincia, Ruta.fecha.asc(), Ruta.nombre.asc()).all() # Ordenar por fecha y nombre
 
     buffer = BytesIO()
     c = pdf_canvas.Canvas(buffer, pagesize=letter)
@@ -632,6 +649,13 @@ def exportar_todas_rutas_pdf():
         c.drawString(100, y_position, "No hay rutas disponibles para exportar.")
     else:
         current_category = None
+        current_month_year = None # Nuevo para agrupar por mes/año
+        meses_espanol_pdf = {
+            1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+            5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+            9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+        }
+
         for ruta in rutas:
             if y_position < 70: # Si queda poco espacio, añadir nueva página
                 c.showPage()
@@ -639,6 +663,7 @@ def exportar_todas_rutas_pdf():
                 y_position = 750
                 y_position = add_page_header(c, y_position, page_number)
                 current_category = None # Resetear categoría para nuevo encabezado en la nueva página
+                current_month_year = None # Resetear mes/año
 
             # Solo se muestra la categoría si es la primera vez que aparece o si cambia
             if ruta.provincia != current_category:
@@ -649,6 +674,21 @@ def exportar_todas_rutas_pdf():
                 y_position -= line_height
                 c.setFont('Helvetica', 10)
                 current_category = ruta.provincia
+                current_month_year = None # Resetear mes/año al cambiar de categoría
+
+            # Agrupar por mes y año si es "Caminatas Programadas" y tiene fecha
+            if ruta.provincia == 'Caminatas Programadas' and ruta.fecha:
+                month_year_str = f"{meses_espanol_pdf[ruta.fecha.month]} {ruta.fecha.year}"
+                if month_year_str != current_month_year:
+                    if current_month_year is not None: # Espacio entre meses
+                        y_position -= line_height
+                    c.setFont('Helvetica-Bold', 11)
+                    c.drawString(120, y_position, f"--- {month_year_str} ---")
+                    y_position -= line_height
+                    c.setFont('Helvetica', 10)
+                    current_month_year = month_year_str
+            else:
+                current_month_year = None # Resetear si no es "Caminatas Programadas" o no tiene fecha
             
             c.drawString(110, y_position, f"  - Nombre: {ruta.nombre}")
             y_position -= line_height
@@ -693,18 +733,36 @@ def exportar_todas_rutas_txt():
         flash(f'Categoría de exportación no válida: "{categoria_seleccionada}".', 'danger')
         return _return_empty_pdf_or_txt(is_pdf=False)
 
-    rutas = query.order_by(Ruta.provincia, Ruta.nombre).all()
+    rutas = query.order_by(Ruta.provincia, Ruta.fecha.asc(), Ruta.nombre.asc()).all() # Ordenar por fecha y nombre
 
     content = "Listado de Rutas Disponibles\n\n"
     if not rutas:
         content += "No hay rutas disponibles para exportar."
     else:
         current_category = None
+        current_month_year = None # Nuevo para agrupar por mes/año
+        meses_espanol_txt = {
+            1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+            5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+            9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+        }
+
         for ruta in rutas:
             # Solo se muestra la categoría si es la primera vez que aparece o si cambia
             if ruta.provincia != current_category:
                 content += f"\n--- Categoría: {ruta.provincia} ---\n"
                 current_category = ruta.provincia
+                current_month_year = None # Resetear mes/año al cambiar de categoría
+
+            # Agrupar por mes y año si es "Caminatas Programadas" y tiene fecha
+            if ruta.provincia == 'Caminatas Programadas' and ruta.fecha:
+                month_year_str = f"{meses_espanol_txt[ruta.fecha.month]} {ruta.fecha.year}"
+                if month_year_str != current_month_year:
+                    content += f"\n--- Mes: {month_year_str} ---\n"
+                    current_month_year = month_year_str
+            else:
+                current_month_year = None # Resetear si no es "Caminatas Programadas" o no tiene fecha
+
             content += f"Nombre: {ruta.nombre}\n"
             content += f"Fecha: {ruta.fecha.strftime('%d/%m/%Y') if ruta.fecha else 'N/A'}\n" # Añadido fecha
             content += f"Precio: ¢{int(ruta.precio) if ruta.precio is not None else 'N/A'}\n" # Añadido precio sin decimales
@@ -722,4 +780,3 @@ def exportar_todas_rutas_txt():
 def exportar_todas_rutas_jpg():
     flash('La exportación de todas las rutas a JPG desde el servidor no está implementada directamente. Considere usar una solución de captura de pantalla en el cliente (navegador) o un servicio externo si es indispensable.', 'info')
     return redirect(url_for('rutas.ver_rutas', categoria=request.args.get('categoria'))) # Redirigir a la vista actual
-

@@ -205,7 +205,7 @@
                 {% for participant_info in participantes_con_info %}
                 <div class="list-group-item">
                     <div>
-                        <a href="{{ url_for('perfil.ver_perfil', user_id=participant_info.id) }}" class="text-decoration-none">
+                        <a href="{{ url_for('perfil.perfil', user_id=participant_info.id) }}" class="text-decoration-none">
                             <strong>{{ participant_counter.value }}. {{ participant_info.nombre }} {{ participant_info.primer_apellido }}</strong> ({{ participant_info.username }})
                         </a>
                         {# NUEVO: Mostrar el estado del abono con el formato solicitado #}

@@ -28,6 +28,32 @@
             margin: 0.5rem 0; /* Espacio arriba y abajo */
             display: block; /* Asegura que se muestre como un bloque */
         }
+        /* Ajustes para el tipo de cambio en móvil */
+        .exchange-rate-item {
+            text-align: center; /* Centrar el contenido en móvil */
+            padding: 0.5rem 1rem;
+            display: block; /* Asegurar que ocupe todo el ancho */
+            color: #333; /* Color de texto para el tipo de cambio */
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.2); /* Fondo sutil para destacar */
+            border-radius: 5px;
+            margin: 0.5rem auto; /* Margen para centrar */
+        }
+        .exchange-rate-item .bccr-logo {
+            height: 25px; /* Tamaño del logo en móvil */
+            margin-right: 5px;
+            vertical-align: middle; /* Alinea verticalmente el logo */
+        }
+        .exchange-rate-item .rate-value {
+            display: block; /* Cada valor en su propia línea en móvil */
+            font-size: 0.9em;
+            line-height: 1.2;
+        }
+        .exchange-rate-item .bccr-text {
+            display: block; /* Asegura que "BCCR" esté en su propia línea en móvil */
+            font-size: 1em; /* Tamaño de fuente para "BCCR" */
+            margin-bottom: 5px; /* Espacio debajo de "BCCR" */
+        }
     }
 
     /* En pantallas de escritorio, ocultar iconos y mostrar texto */
@@ -41,6 +67,34 @@
         /* Ocultar el separador en escritorio */
         .mobile-separator {
             display: none;
+        }
+        /* Estilos para el tipo de cambio en escritorio */
+        .exchange-rate-item {
+            display: flex; /* Usar flexbox para alinear */
+            align-items: center; /* Centrar verticalmente */
+            padding-left: 15px; /* Espacio para separarlo de otros ítems */
+            color: #333; /* Color de texto */
+            font-size: 0.85em; /* Tamaño de fuente más pequeño */
+            white-space: nowrap; /* Evitar que el texto se rompa */
+            margin-left: 15px; /* Espacio a la izquierda */
+            border-left: 1px solid rgba(0, 0, 0, 0.1); /* Separador visual */
+        }
+        .exchange-rate-item .bccr-logo {
+            height: 20px; /* Tamaño más pequeño para el logo en escritorio */
+            margin-right: 5px;
+            vertical-align: middle; /* Alinea verticalmente el logo */
+        }
+        .exchange-rate-item .rate-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .exchange-rate-item .rate-value {
+            margin-right: 10px; /* Espacio entre compra y venta */
+        }
+        .exchange-rate-item .bccr-text {
+            display: inline; /* "BCCR" en línea con los valores en escritorio */
+            margin-right: 5px; /* Espacio después de "BCCR" */
+            font-size: 1em; /* Tamaño de fuente para "BCCR" */
         }
     }
 
@@ -89,7 +143,7 @@
                         </a>
                     </li>
                   
-
+                           
                     {% if session.logged_in %}
                         {# MODIFICACIÓN: Mostrar "Más Opciones" solo para Superuser #}
                         {% if session.role == 'Superuser' %}
@@ -105,6 +159,7 @@
                                     <li><a class="dropdown-item" href="{{ url_for('proyecto.ver_proyectos') }}">Gestor de Proyectos</a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('notas.ver_notas') }}">Gestor de Notas</a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('intern.index') }}">Internacional</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('btns.crear_btns') }}">Configurar Botón Flotante</a></li>
                                     <li><a class="dropdown-item" href="https://www.pythonanywhere.com/user/kenth1977/">Pythonanywhere</a></li>
                                     <li><a class="dropdown-item" href="https://gpx.studio/app#10.16/9.6134/-83.8223">GPX Studio</a></li>
                                     <li><a class="dropdown-item" href="https://www.sinac.go.cr/ES/resvlinea/Paginas/default.aspx">Reservas Sinac</a></li>
@@ -115,11 +170,14 @@
                         {% endif %}
                         
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('perfil.ver_perfil') }}">
+                            <a class="nav-link" href="{{ url_for('perfil.perfil') }}">
                                 <i class="fas fa-user icon-only-mobile"></i> <!-- Icono de usuario para perfil logueado -->
                                 <span class="text-only-desktop">{{ session.username }}</span>
                             </a>
                         </li>
+
+        
+
                        
                         <li class="nav-item">
                             <hr class="mobile-separator d-lg-none"> {# Separador visible solo en móvil con estilo mejorado #}

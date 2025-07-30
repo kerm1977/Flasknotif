@@ -245,15 +245,7 @@
                             {% if user.fecha_cumpleanos %}
                             <li class="list-group-item">
                                 <strong>Fecha de Cumpleaños:</strong>
-                                {# MODIFICACIÓN: Usar el filtro to_datetime antes de strftime #}
-                                <span>
-                                    {% set reg_date = user.fecha_cumpleanos | to_datetime %}
-                                    {% if reg_date %}
-                                        {{ reg_date.strftime('%d/%m/%Y') }}
-                                    {% else %}
-                                        Fecha inválida
-                                    {% endif %}
-                                </span>
+                                <span>{{ user.fecha_cumpleanos.strftime('%d/%m/%Y') }}</span>
                             </li>
                             {% endif %}
                             {% if user.tipo_sangre %}
@@ -362,7 +354,7 @@
 {# NUEVO BOTÓN FLOTANTE PARA BACKUP (Solo para Superuser) #}
 {% if session.get('role') == 'Superuser' %}
 <div class="fab-container-backup">
-    <button type="button" class="fab-button-backup" title="Hacer Backup de la Base de Datos" onclick="performBackup()">
+    <button type="button" class="fab-button-backup" title="Hacer Backup de la Base de Datos" onclick="confirmBackup()">
         <i class="fas fa-database"></i> {# Icono de base de datos #}
     </button>
 </div>
@@ -415,28 +407,33 @@
         }
     });
 
-    // Función para el botón de backup (ahora sin confirmación)
-    function performBackup() {
-        // Crear un formulario dinámico para enviar la solicitud POST
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url_for("perfil.backup_database") }}'; // Apunta a la ruta de backup
+    // Función para el botón de backup
+    function confirmBackup() {
+        // Reemplazado confirm() con un modal personalizado
+        customConfirm('¿Estás seguro de que quieres hacer un backup de la base de datos? Esto puede tomar un momento.', function(result) {
+            if (result) {
+                // Crear un formulario dinámico para enviar la solicitud POST
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("perfil.backup_database") }}'; // Apunta a la nueva ruta de backup
 
-        // Añadir el token CSRF si lo estás usando
-        const csrfToken = document.querySelector('input[name="csrf_token"]');
-        if (csrfToken) {
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'csrf_token';
-            hiddenInput.value = csrfToken.value;
-            form.appendChild(hiddenInput);
-        }
+                // Añadir el token CSRF si lo estás usando
+                const csrfToken = document.querySelector('input[name="csrf_token"]');
+                if (csrfToken) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'csrf_token';
+                    hiddenInput.value = csrfToken.value;
+                    form.appendChild(hiddenInput);
+                }
 
-        document.body.appendChild(form);
-        form.submit();
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
 
-    // Modal de Confirmación Personalizado (se mantiene por si otras partes del código lo usan)
+    // Modal de Confirmación Personalizado (copiado de ver_files.html para consistencia)
     function customConfirm(message, callback) {
         const modalHtml = `
             <div class="custom-modal-overlay" id="customConfirmModal" style="display: flex;">
