@@ -256,7 +256,7 @@ def crear_caminata():
         "Iniciante",
         "Básico",
         "Intermedio",
-        "Dificil"
+        "Dificil",
         "Avanzado",
         "Técnico"
     ]
@@ -678,7 +678,8 @@ def eliminar_caminata(caminata_id):
         Itinerario.query.filter_by(caminata_id=caminata.id).delete(synchronize_session=False)
         
         # Paso 3: Eliminar abonos asociados primero para evitar errores de restricción de clave externa
-        AbonoCaminata.query.filter_by(caminata_id=caminata.id, user_id=participante.id).delete()
+        # MODIFICADO: Eliminar abonos para la caminata sin filtrar por un participante específico
+        AbonoCaminata.query.filter_by(caminata_id=caminata.id).delete(synchronize_session=False)
         
         # Paso 4: Eliminar las asociaciones en la tabla intermedia caminata_participantes
         # Esto se hace vaciando la lista de participantes de la caminata
