@@ -43,6 +43,8 @@
                     <label for="imagen_caminata" class="form-label">Imagen de la Caminata:</label>
                     <input type="file" class="form-control" id="imagen_caminata" name="imagen_caminata" accept="image/png, image/jpeg, image/jpg, image/gif">
                     <small class="form-text text-muted">Formatos permitidos: PNG, JPG, JPEG, GIF. Dejar en blanco para mantener la imagen actual.</small>
+                    {# NUEVO: Advertencia sobre caracteres especiales en el nombre del archivo #}
+                    <small class="form-text text-danger">Evite caracteres especiales en el nombre del archivo: # &lt; &gt; ! $ % &amp; / = ? ¡ ' " ¿ ° |</small>
                     {% if caminata.imagen_caminata_url %}
                         <img src="{{ url_for('static', filename=caminata.imagen_caminata_url) }}" alt="Imagen actual" class="img-thumbnail mt-2" style="max-height: 100px;">
                         <input type="hidden" name="current_imagen_caminata_url" value="{{ caminata.imagen_caminata_url }}">
@@ -250,7 +252,6 @@
                             "Ferry",
                             "Avion"
                         ] %}
-                        {% set selected_transportes = caminata.tipo_transporte | from_json %}
                         {% for option in tipo_transporte_opciones %}
                         <option value="{{ option }}" {% if option in selected_transportes %}selected{% endif %}>{{ option }}</option>
                         {% endfor %}

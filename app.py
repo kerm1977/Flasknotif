@@ -39,10 +39,16 @@ app.config.from_object(Config)
 app.register_blueprint(btns_bp)
 
 # Configuración para subida de archivos
+# NOTA IMPORTANTE: Estas rutas se definen aquí y luego se adjuntan a app.config
+# para que sean accesibles desde los Blueprints a través de current_app.config
+# Asegúrate de que los nombres de las carpetas coincidan con lo que esperas.
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
 PROJECT_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'project_images')
 NOTE_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'note_images') # Nueva carpeta para imágenes de notas
-CAMINATA_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'caminata_images') # NUEVA: Carpeta para imágenes de caminatas
+
+# MODIFICADO: Esta línea ahora apunta a la carpeta 'caminatas'
+CAMINATA_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'caminatas')
+
 PAGOS_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'pagos_images') # NUEVA: Carpeta para imágenes de pagos
 CALENDAR_IMAGE_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'calendar_images') # NUEVA: Carpeta para imágenes de calendario
 SONGS_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'songs') # NUEVA: Carpeta para archivos de música
@@ -54,6 +60,7 @@ UPLOAD_FILES_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'files') 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 ALLOWED_MUSIC_EXTENSIONS = {'mp3', 'wav', 'ogg'} # NUEVA: Extensiones de música permitidas
 
+# Adjuntar las rutas de las carpetas a la configuración de la aplicación
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROJECT_IMAGE_UPLOAD_FOLDER'] = PROJECT_IMAGE_UPLOAD_FOLDER
 app.config['NOTE_IMAGE_UPLOAD_FOLDER'] = NOTE_IMAGE_UPLOAD_FOLDER # Guarda la ruta en config
@@ -70,7 +77,10 @@ app.config['UPLOAD_FILES_FOLDER'] = UPLOAD_FILES_FOLDER # NUEVA: Adjuntar la rut
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROJECT_IMAGE_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(NOTE_IMAGE_UPLOAD_FOLDER, exist_ok=True) # Asegura que la carpeta para imágenes de notas exista
-os.makedirs(CAMINATA_IMAGE_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para imágenes de caminatas exista
+
+# MODIFICADO: Asegura que la carpeta 'caminatas' exista
+os.makedirs(CAMINATA_IMAGE_UPLOAD_FOLDER, exist_ok=True)
+
 os.makedirs(PAGOS_IMAGE_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para imágenes de pagos exista
 os.makedirs(CALENDAR_IMAGE_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para imágenes de calendario exista
 os.makedirs(SONGS_UPLOAD_FOLDER, exist_ok=True) # NUEVA: Asegura que la carpeta para canciones exista
@@ -101,7 +111,10 @@ def allowed_music_file(filename):
 app.allowed_file = allowed_file
 app.allowed_music_file = allowed_music_file # NUEVA: Adjuntar la función para archivos de música
 app.UPLOAD_FOLDER = UPLOAD_FOLDER
-app.CAMINATA_IMAGE_UPLOAD_FOLDER = CAMINATA_IMAGE_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de imágenes de caminatas
+
+# MODIFICADO: Adjuntar la ruta de imágenes de caminatas
+app.CAMINATA_IMAGE_UPLOAD_FOLDER = CAMINATA_IMAGE_UPLOAD_FOLDER
+
 app.PAGOS_IMAGE_UPLOAD_FOLDER = PAGOS_IMAGE_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de imágenes de pagos
 app.CALENDAR_IMAGE_UPLOAD_FOLDER = CALENDAR_IMAGE_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de imágenes de calendario
 app.SONGS_UPLOAD_FOLDER = SONGS_UPLOAD_FOLDER # NUEVA: Adjuntar la ruta de canciones

@@ -44,6 +44,8 @@
                     <label for="imagen_caminata" class="form-label">Imagen de la Caminata:</label>
                     <input type="file" class="form-control" id="imagen_caminata" name="imagen_caminata" accept="image/png, image/jpeg, image/jpg, image/gif">
                     <small class="form-text text-muted">Formatos permitidos: PNG, JPG, JPEG, GIF.</small>
+                    {# NUEVO: Advertencia sobre caracteres especiales en el nombre del archivo #}
+                    <small class="form-text text-danger">Evite caracteres especiales en el nombre del archivo: # &lt; &gt; ! $ % &amp; / = ? ¡ ' " ¿ ° |</small>
                 </div>
                 <div class="col-md-6">
                     <label for="actividad" class="form-label">Actividad <span class="text-danger">*</span>:</label>

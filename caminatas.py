@@ -3,7 +3,7 @@ from functools import wraps
 from datetime import datetime, date, time # Importar time para manejar horas
 import os
 import json
-from werkzeug.utils import secure_filename
+# from werkzeug.utils import secure_filename # COMENTADO: Ya no usaremos secure_filename directamente
 from sqlalchemy import desc, func
 from fpdf import FPDF
 from PIL import Image, ImageDraw, ImageFont
@@ -13,6 +13,7 @@ import pytz # Importar pytz para manejo de zonas horarias
 import locale # NUEVO: Importar módulo locale
 from flask_wtf.csrf import generate_csrf # Añade esta línea
 from sqlalchemy.exc import IntegrityError # NUEVO: Importar IntegrityError para manejar errores de integridad
+import re # NUEVO: Importar re para expresiones regulares
 
 # Intenta configurar el locale para español.
 # La cadena exacta puede variar según el sistema operativo (Linux, Windows, macOS).
@@ -61,6 +62,30 @@ def admin_required(f):
             return redirect(url_for('home')) # Redirige a una página de inicio o de acceso denegado
         return f(*args, **kwargs)
     return decorated_function
+
+# --- Funciones Auxiliares para Nombres de Archivo ---
+def is_valid_filename(filename):
+    """
+    Valida si el nombre del archivo contiene caracteres especiales no permitidos.
+    Caracteres no permitidos: #<>!$%&/=?¡'"¿°|
+    """
+    invalid_chars_pattern = r'[#<>!$%&/=?¡\'"¿°|]'
+    if re.search(invalid_chars_pattern, filename):
+        return False
+    return True
+
+def generate_unique_filename(original_filename, upload_folder):
+    """
+    Genera un nombre de archivo único, manteniendo el nombre original si es posible,
+    o añadiendo un número consecutivo si ya existe.
+    """
+    filename_base, extension = os.path.splitext(original_filename)
+    counter = 1
+    unique_filename = original_filename
+    while os.path.exists(os.path.join(upload_folder, unique_filename)):
+        unique_filename = f"{filename_base}_{counter}{extension}"
+        counter += 1
+    return unique_filename
 
 # --- Rutas de Caminatas ---
 
@@ -178,8 +203,14 @@ def crear_caminata():
         if 'imagen_caminata' in request.files:
             file = request.files['imagen_caminata']
             if file.filename != '':
-                filename = secure_filename(file.filename)
-                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'caminatas')
+                # NUEVO: Validar caracteres en el nombre del archivo original
+                if not is_valid_filename(file.filename):
+                    flash('El nombre del archivo contiene caracteres especiales no permitidos (#, <, >, !, $, %, &, /, =, ?, ¡, \', ", ¿, °, |). Por favor, renombra el archivo.', 'danger')
+                    return redirect(url_for('caminatas.crear_caminata'))
+
+                # MODIFICADO: Usar generate_unique_filename para manejar nombres originales y duplicados
+                filename = generate_unique_filename(file.filename, current_app.config['CAMINATA_IMAGE_UPLOAD_FOLDER'])
+                upload_folder = current_app.config['CAMINATA_IMAGE_UPLOAD_FOLDER'] # Usar la ruta de config
                 os.makedirs(upload_folder, exist_ok=True) 
                 file_path = os.path.join(upload_folder, filename)
                 file.save(file_path)
@@ -487,20 +518,28 @@ def editar_caminata(caminata_id):
         if 'imagen_caminata' in request.files:
             file = request.files['imagen_caminata']
             if file.filename != '':
+                # NUEVO: Validar caracteres en el nombre del archivo original
+                if not is_valid_filename(file.filename):
+                    flash('El nombre del archivo contiene caracteres especiales no permitidos (#, <, >, !, $, %, &, /, =, ?, ¡, \', ", ¿, °, |). Por favor, renombra el archivo.', 'danger')
+                    return redirect(url_for('caminatas.editar_caminata', caminata_id=caminata.id))
+
                 # Eliminar la imagen antigua si existe
                 if caminata.imagen_caminata_url:
                     old_image_path = os.path.join(current_app.root_path, 'static', caminata.imagen_caminata_url)
                     if os.path.exists(old_image_path):
                         os.remove(old_image_path)
                 
-                filename = secure_filename(file.filename)
-                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'caminatas')
+                # MODIFICADO: Usar generate_unique_filename para manejar nombres originales y duplicados
+                filename = generate_unique_filename(file.filename, current_app.config['CAMINATA_IMAGE_UPLOAD_FOLDER'])
+                upload_folder = current_app.config['CAMINATA_IMAGE_UPLOAD_FOLDER'] # Usar la ruta de config
                 os.makedirs(upload_folder, exist_ok=True)
                 file_path = os.path.join(upload_folder, filename)
                 file.save(file_path)
                 caminata.imagen_caminata_url = os.path.join('uploads', 'caminatas', filename).replace("\\", "/")
         else:
             # Si no se sube nueva imagen, mantener la existente o establecer a None si se borró
+            # Asegúrate de que el campo 'current_imagen_caminata_url' se envíe desde el formulario HTML
+            # si deseas mantener la imagen existente.
             if request.form.get('current_imagen_caminata_url') == '': 
                 caminata.imagen_caminata_url = None
 
@@ -639,7 +678,7 @@ def eliminar_caminata(caminata_id):
         Itinerario.query.filter_by(caminata_id=caminata.id).delete(synchronize_session=False)
         
         # Paso 3: Eliminar abonos asociados primero para evitar errores de restricción de clave externa
-        AbonoCaminata.query.filter_by(caminata_id=caminata.id).delete(synchronize_session=False)
+        AbonoCaminata.query.filter_by(caminata_id=caminata.id, user_id=participante.id).delete()
         
         # Paso 4: Eliminar las asociaciones en la tabla intermedia caminata_participantes
         # Esto se hace vaciando la lista de participantes de la caminata
